@@ -1,0 +1,183 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// general scans model
+
+model Manga {
+  id                Int             @id @default(autoincrement())
+  title             String
+  alternativeTitle  String
+  slug              String
+  synopsis          String
+  thumbnail         String
+  author            Author          @relation(fields: [authorId], references: [id])
+  authorId          Int
+  artist            Artist          @relation(fields: [artistId], references: [id])
+  artistId          Int
+  type              TYPE
+  releaseDate       DateTime
+  score             Float
+  status            MANGA_STATUS    @default(ON_GOING)
+  genres            Genre[]
+  chapters          Chapter[]
+  lastChapterUpdate DateTime        @default(now())
+  views             BigInt          @default(0)
+  favoritedBy       User[]          @relation("UserFavorites")
+  userFavorites     UserFavorites[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Author {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  manga Manga[]
+}
+
+model Artist {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  manga Manga[]
+}
+
+enum MANGA_STATUS {
+  ON_GOING
+  FINISHED
+}
+
+enum TYPE {
+  MANGA
+  MANHWA
+  MANHUA
+}
+
+model Genre {
+  id    Int     @id @default(autoincrement())
+  name  String
+  manga Manga[]
+}
+
+model Chapter {
+  id           Int     @id @default(autoincrement())
+  name         String
+  panels       String  @default("[]")
+  totalPanel   Int
+  Manga        Manga   @relation(fields: [mangaId], references: [id])
+  mangaId      Int
+  downloadLink String?
+  vip          Boolean @default(false)
+  views        BigInt  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// authentication model
+
+model User {
+  id              String          @id @default(cuid())
+  username        String
+  email           String          @unique
+  emailVerified   Boolean         @default(false)
+  password        String?
+  resetPasswordId String?
+  image           String?
+  role            USER_ROLE       @default(REGULAR)
+  favoriteManga   Manga[]         @relation("UserFavorites")
+  userFavorites   UserFavorites[]
+  Session         Session[]
+  Account         Account?
+  // Optional for WebAuthn support
+  Authenticator   Authenticator[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum USER_ROLE {
+  ADMIN
+  EDITOR
+  PREMIUM
+  REGULAR
+}
+
+model UserFavorites {
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  manga   Manga  @relation(fields: [mangaId], references: [id])
+  mangaId Int
+
+  @@id([userId, mangaId])
+}
+
+model Account {
+  id                       String  @id @default(cuid())
+  userId                   String  @unique
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String? @db.Text
+  access_token             String? @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String? @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+  user                     User?   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
