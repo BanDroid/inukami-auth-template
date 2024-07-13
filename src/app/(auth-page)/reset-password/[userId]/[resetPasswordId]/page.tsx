@@ -40,7 +40,10 @@ export default async function Page({
   return (
     <section className="flex items-center justify-center">
       <div className="w-full h-full max-w-xl">
-        <UserResetPasswordForm userId={userRequested.id} />
+        <UserResetPasswordForm
+          userId={userRequested.id}
+          resetPasswordId={resetPasswordId}
+        />
       </div>
     </section>
   );

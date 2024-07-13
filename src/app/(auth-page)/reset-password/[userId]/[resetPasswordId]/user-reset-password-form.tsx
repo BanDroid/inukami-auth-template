@@ -38,9 +38,11 @@ const FormSchema = z.object({
 type FormData = z.infer<typeof FormSchema>;
 
 interface UserResetPasswordFormProps {
+  resetPasswordId: string;
   userId: string;
 }
 export default function UserResetPasswordForm({
+  resetPasswordId,
   userId,
 }: UserResetPasswordFormProps) {
   const router = useRouter();
@@ -54,7 +56,7 @@ export default function UserResetPasswordForm({
 
   const onSubmit: SubmitHandler<FormData> = async (values) => {
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(`/api/auth/reset-password/${resetPasswordId}`, {
         method: "PUT",
         body: JSON.stringify({ ...values, userId }),
         headers: {

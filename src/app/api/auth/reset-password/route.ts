@@ -43,21 +43,3 @@ export async function POST(req: NextRequest) {
     { status: 201 }
   );
 }
-
-export async function PUT(req: NextRequest) {
-  const { userId, password } = await req.json();
-  const updatedUser = await resetPasswordUser(userId, password);
-  if (!updatedUser) {
-    return NextResponse.json(
-      { success: false, message: `Kredensial tidak valid.` },
-      { status: 400 }
-    );
-  }
-  return NextResponse.json(
-    {
-      success: true,
-      message: `Kata sandi berhasil diperbarui, silahkan masuk kembali.`,
-    },
-    { status: 201 }
-  );
-}
